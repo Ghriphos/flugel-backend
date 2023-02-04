@@ -1,37 +1,49 @@
-import express from 'express'
+import express, { application } from "express"
+import jwt from "jsonwebtoken"
+import sio from "socket.io"
+import http from "http"
 
-const app = express();
-const users = ['Richard', 'Itallo', 'Luis'];
+const app = express()
 
-function isNumber(number: string) {
-    return /[0-9]+/g.test(number)
-}
+const server = http.createServer(app) 
+
+const io = new sio.Server(server)
 
 app.use(express.json())
 
-app.get("/", (req, res) => {
-    res.send({send: "hello, world"})
-});
-
-app.get("/:id", (request, res) => {
-   
-    if (isNumber(request.params.id)){
-        const id = parseInt(request.params.id)
-        res.send(true)
+app.post("/connect", (request, response) => {
+    let name = request.body.name
+    if (!(name && typeof name === "string")){
+        name = "anonimo"
     }
-    else{
-        return res.status(400).send("the route isn't a number")
-    }
-});
-
-app.post("/createUser", (request, response) => {
-    if(undefined){
-        const { id, name } = request.body
-        console.log({ id, name })
-    }
-    
+    const token = jwt.sign(name, "123")
+    return response.status(200).send({token})
 })
 
-app.listen(3030, () => {
-    console.log("the server is alive")
-});
+app.post("/message", (request, response) => {
+    const message = request.body.message
+    if(!(message && typeof message === "string")){
+        return response.status(400).send("please insert a message")
+    }
+    else{
+        const authorization = request.headers['authorization']
+        if (!authorization || !authorization.includes('Bearer')){
+            return response.status(401).send("token not allowed")
+        }
+
+        //@ts-ignore
+        const [ _bearer, token ] = authorization?.split(' ')
+        const name = jwt.verify(token, '123')
+
+        io.emit('message',{name, message})
+        return response.status(200).send({sent: true})
+    }
+})
+
+io.on('connection', () => {
+    console.log('someone connected')   
+}) 
+
+server.listen(3030, () => {
+
+})
