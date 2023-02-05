@@ -13,10 +13,13 @@ app.use(express.json())
 
 app.post("/connect", (request, response) => {
     let name = request.body.name
+
     if (!(name && typeof name === "string")){
         name = "anonimo"
     }
+
     const token = jwt.sign(name, "123")
+    
     return response.status(200).send({token})
 })
 
