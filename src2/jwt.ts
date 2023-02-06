@@ -5,3 +5,7 @@ export function createToken(payload){
 
     return token
 }
+
+export function verifyToken(token){
+    return jwt.verify(token, "123")
+}

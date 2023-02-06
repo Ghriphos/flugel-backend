@@ -29,7 +29,7 @@ app.post("/message", (request, response) => {
         return response.status(400).send("please insert a message")
     }
     else{
-        const authorization = request.headers['authorization']
+        const authorization = request.headers['Authorization']
         if (!authorization || !authorization.includes('Bearer')){
             return response.status(401).send("token not allowed")
         }
